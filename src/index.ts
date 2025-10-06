@@ -1,5 +1,6 @@
-// types
+// internal imports
 import type { BotConfig } from "./types/BotConfig";
+import { system } from "./system/system";
 
 // ai-sdk
 import { generateText } from "ai";
@@ -53,6 +54,7 @@ client.on(Events.MessageCreate, async (message: Message) => {
 
     const { text } = await generateText({
       model: openai("gpt-5-nano"),
+      system: system,
       prompt,
     });
 
