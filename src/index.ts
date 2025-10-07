@@ -3,11 +3,15 @@ import type { BotConfig } from "./types/BotConfig";
 import { system } from "./system/system";
 
 // ai-sdk
-import { generateText } from "ai";
+import { streamText } from "ai";
 import { openai } from "@ai-sdk/openai";
 
 // discord.js
 import { Client, Events, GatewayIntentBits, Message } from "discord.js";
+import type { TextBasedChannel } from "discord.js";
+
+// tools
+import { getWeather } from "./tools/GetWeather";
 
 const config: BotConfig = {
   discordToken: process.env.DISCORD_TOKEN!,
@@ -50,16 +54,27 @@ client.on(Events.MessageCreate, async (message: Message) => {
       return;
     }
 
-    await message.channel.sendTyping();
+    if (!message.channel.isTextBased()) return;
+    await (message.channel as any).sendTyping();
 
-    const { text } = await generateText({
+    // stream the model output given system + prompt
+    const result = streamText({
       model: openai("gpt-5-nano"),
-      system: system,
+      system,
       prompt,
+      tools: { getWeather },
     });
 
+    // collect full text from the stream
+    let full = "";
+    for await (const delta of result.textStream) {
+      full += delta;
+    }
+
     // discord has a 2000-character message limit
-    for (const chunk of chunkString(text, 2000)) {
+    const chunks = chunkString(full, 2000).filter((c) => c.trim().length > 0);
+    if (chunks.length === 0) return;
+    for (const chunk of chunks) {
       await message.reply({
         content: chunk,
         allowedMentions: { repliedUser: false },
@@ -83,7 +98,7 @@ function chunkString(input: string, size: number): string[] {
     chunks.push(input.slice(i, i + size));
     i += size;
   }
-  return chunks.length ? chunks : [""];
+  return chunks;
 }
 
 client.login(config.discordToken);
