@@ -17,8 +17,7 @@
     "zod": "^4.1.12"
   },
   "scripts": {
-    "dev": "bun --hot src/index.ts",
-    "start": "bun src/index.ts",
-    "build": "bun build src/index.ts --outdir ./dist --target bun"
+    "dev": "bun --hot src/discord/bot.ts",
+    "start": "bun src/discord/bot.ts"
   }
 }
