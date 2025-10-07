@@ -1,4 +1,5 @@
 import { Client, Events, GatewayIntentBits, Message } from "discord.js";
+import { EmbedResponse } from "./embedBuilder/embedBuilder";
 
 import { BotConfig } from "../types/BotConfig";
 
@@ -45,17 +46,15 @@ client.on(Events.MessageCreate, async (message: Message) => {
 
     const reply = await runAgent(prompt);
 
-    await message.reply({
-      content: reply.slice(0, 2000),
-      allowedMentions: { repliedUser: false },
+    await EmbedResponse.sendLongResponse(message, reply, {
+      title: "AI Response 🤖",
+      includeContext: true,
     });
   } catch (err) {
-    console.error("Error handling mention:", err);
+    console.error("Error handling mention with embed:", err);
+    // Fallback to simple text reply if embed fails
     try {
-      await message.reply({
-        content: "Sorry, something went wrong.",
-        allowedMentions: { repliedUser: false },
-      });
+      const reply = "Sorry, something went wrong.";
     } catch {}
   }
 });
