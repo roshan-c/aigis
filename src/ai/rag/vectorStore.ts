@@ -28,9 +28,7 @@ export class VectorStore {
   }
 
   async addDocuments(docs: Document[]): Promise<void> {
-    for (const doc of docs) {
-      await this.addDocument(doc);
-    }
+    await Promise.all(docs.map((doc) => this.addDocument(doc)));
   }
 
   async search(query: string, topK: number = 3): Promise<Document[]> {
@@ -68,7 +66,12 @@ export class VectorStore {
       normB += (b[i] ?? 0) * (b[i] ?? 0);
     }
 
-    return dotProduct / (Math.sqrt(normA) * Math.sqrt(normB));
+    const magnitude = Math.sqrt(normA) * Math.sqrt(normB);
+    if (magnitude === 0) {
+      return 0;
+    }
+
+    return dotProduct / magnitude;
   }
 
   getDocumentCount(): number {
