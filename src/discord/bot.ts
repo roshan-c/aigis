@@ -1,7 +1,7 @@
 import { Client, Events, GatewayIntentBits, Message } from "discord.js";
 import { EmbedResponse } from "./embedBuilder/embedBuilder";
 
-import { BotConfig } from "../types/BotConfig";
+import type { BotConfig } from "../types/BotConfig";
 
 import { runAgent } from "../ai/agent/agent";
 
