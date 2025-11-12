@@ -11,13 +11,16 @@
     "typescript": "^5"
   },
   "dependencies": {
-    "@ai-sdk/openai": "^2.0.42",
+    "@ai-sdk/openai": "^2.0.65",
+    "@types/pg": "^8.15.6",
     "ai": "^5.0.60",
     "discord.js": "^14.22.1",
+    "pg": "^8.16.3",
     "zod": "^4.1.12"
   },
   "scripts": {
     "dev": "bun --hot src/discord/bot.ts",
-    "start": "bun src/discord/bot.ts"
+    "start": "bun src/discord/bot.ts",
+    "build": "bun build src/discord/bot.ts --outdir ./dist --target bun"
   }
 }
