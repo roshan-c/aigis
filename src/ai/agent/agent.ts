@@ -1,7 +1,7 @@
 import { generateText, stepCountIs } from "ai";
-import { openai } from "@ai-sdk/openai";
 
 import { system } from "../system/system";
+import { openrouter } from "../providers/openrouter";
 
 import { weatherTool } from "../tools/weatherTool";
 import { convertFahrenheitToCelsiusTool } from "../tools/convertFahrenheitToCelsiusTool";
@@ -13,7 +13,7 @@ export async function runAgent(
   channelId: string,
 ) {
   const result = await generateText({
-    model: openai("gpt-4o-mini"),
+    model: openrouter.chat("openrouter/polaris-alpha"),
     system: system,
     prompt: `${context}\n\nCurrent message: ${prompt}`,
     tools: {

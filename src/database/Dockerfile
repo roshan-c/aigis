@@ -1,0 +1,7 @@
+FROM pgvector/pgvector:pg16
+
+ENV POSTGRES_DB=aigis
+ENV POSTGRES_USER=postgres
+ENV POSTGRES_PASSWORD=postgres
+
+EXPOSE 5432

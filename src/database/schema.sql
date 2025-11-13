@@ -1,4 +1,3 @@
-// src/database/schema.sql
 CREATE EXTENSION IF NOT EXISTS vector;
 
 CREATE TABLE IF NOT EXISTS messages (

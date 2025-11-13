@@ -11,10 +11,11 @@
     "typescript": "^5"
   },
   "dependencies": {
-    "@ai-sdk/openai": "^2.0.65",
+    "@openrouter/ai-sdk-provider": "^1.2.0",
     "@types/pg": "^8.15.6",
     "ai": "^5.0.60",
     "discord.js": "^14.22.1",
+    "dotenv": "^17.2.3",
     "pg": "^8.16.3",
     "zod": "^4.1.12"
   },

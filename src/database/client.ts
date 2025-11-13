@@ -1,15 +1,23 @@
+// src/database/client.ts
 import { Pool } from "pg";
 
-export const pool = new Pool({
-  host: process.env.POSTGRES_HOST || "localhost",
-  port: parseInt(process.env.POSTGRES_PORT || "5432"),
-  database: process.env.POSTGRES_DB || "aigis",
-  user: process.env.POSTGRES_USER || "postgres",
-  password: process.env.POSTGRES_PASSWORD,
+const dbConfig = {
+  host: "localhost",
+  port: 5432,
+  database: "aigis",
+  user: "postgres",
+  password: "postgres",
   max: 20,
   idleTimeoutMillis: 30000,
   connectionTimeoutMillis: 2000,
+};
+
+console.log("Database config:", {
+  ...dbConfig,
+  password: dbConfig.password ? "***SET***" : "NOT SET",
 });
+
+export const pool = new Pool(dbConfig);
 
 export async function initDatabase() {
   const client = await pool.connect();
