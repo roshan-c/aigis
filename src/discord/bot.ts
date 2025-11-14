@@ -54,6 +54,8 @@ async function buildContext(
 }
 
 client.on(Events.MessageCreate, async (message: Message) => {
+  const startTime = Date.now();
+  
   try {
     // Early returns to avoid unnecessary processing
     if (message.author.bot) return;
@@ -68,6 +70,9 @@ client.on(Events.MessageCreate, async (message: Message) => {
       });
       return;
     }
+
+    // Log incoming message
+    console.log(`[INCOMING] ${message.author.username}: ${prompt}`);
 
     // Store user message only after confirming bot will respond
     await messageRepo.storeMessage(
@@ -100,6 +105,11 @@ client.on(Events.MessageCreate, async (message: Message) => {
       title: "AI Response 🤖",
       includeContext: true,
     });
+
+    // Log outgoing message with timing
+    const processingTime = Date.now() - startTime;
+    console.log(`[OUTGOING] Response sent in ${processingTime}ms`);
+    console.log(`[OUTGOING] Content: ${reply.substring(0, 100)}${reply.length > 100 ? '...' : ''}`);
   } catch (err) {
     console.error("Error handling mention with embed:", err);
     try {

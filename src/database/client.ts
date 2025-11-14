@@ -12,10 +12,10 @@ const dbConfig = {
   connectionTimeoutMillis: 2000,
 };
 
-console.log("Database config:", {
-  ...dbConfig,
-  password: dbConfig.password ? "***SET***" : "NOT SET",
-});
+// console.log("Database config:", {
+//   ...dbConfig,
+//   password: dbConfig.password ? "***SET***" : "NOT SET",
+// });
 
 export const pool = new Pool(dbConfig);
 
