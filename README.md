@@ -4,6 +4,17 @@ An AI-powered Discord companion that role-plays as Aigis from *Persona 3*. The b
 
 ---
 
+## Features at a glance
+
+- **Agentic Discord bot** &mdash; Powered by the [Vercel AI SDK](https://sdk.vercel.ai/) using models from OpenRouter.
+- **Retrieval-Augmented Generation** &mdash; Stores every message with a 1,536-dimensional vector and retrieves relevant history before answering.
+- **Tool calling** &mdash; Built-in tools for weather lookups (sample), Fahrenheit→Celsius conversion, quote fetching, and semantic memory search (`ragSearch`).
+- **Circuit breaker pattern** &mdash; Protects external API calls from cascading failures with automatic recovery.
+- **Persona prompt** &mdash; The bot speaks in character using the prompt defined in `src/ai/system/SYSTEM.MD`.
+- **Embeddable responses** &mdash; Long replies are automatically split into Discord embeds with context sections.
+
+---
+
 ## Quick start
 
 1. **Install dependencies**
@@ -55,6 +66,7 @@ Optional:
 | --- | --- | --- | --- |
 | `DISCORD_TOKEN` | ✅ | — | Discord bot token used to authenticate the client |
 | `OPENROUTER_API_KEY` | ✅ | — | OpenRouter key for both chat and embedding requests |
+| `AI_MODEL` | ✅ | - | Chat model ID used for agent text generation |
 | `OPENROUTER_API_BASE` | ❌ | `https://openrouter.ai/api/v1` | Override when routing through a proxy |
 | `OPENROUTER_EMBEDDING_MODEL` | ❌ | `openai/text-embedding-3-small` | Embedding model ID used for pgvector storage |
 | `EMBEDDING_VECTOR_DIMENSION` | ❌ | — | Expected embedding length; set if you change the table definition |
@@ -93,16 +105,6 @@ The bot listens for message mentions, generates a reply via OpenRouter, stores b
 
 ---
 
-## Features at a glance
-
-- **Agentic Discord bot** &mdash; Powered by the [Vercel AI SDK](https://sdk.vercel.ai/) with OpenRouter’s `openrouter/polaris-alpha` model.
-- **Retrieval-Augmented Generation** &mdash; Stores every message with a 1,536-dimensional vector and retrieves relevant history before answering.
-- **Tool calling** &mdash; Built-in tools for weather lookups (sample), Fahrenheit→Celsius conversion, and semantic memory search (`ragSearch`).
-- **Persona prompt** &mdash; The bot speaks in character using the prompt defined in `src/ai/system/SYSTEM.MD`.
-- **Embeddable responses** &mdash; Long replies are automatically split into Discord embeds with context sections.
-
----
-
 ## Architecture overview
 
 1. **Discord entry point** (`src/discord/bot.ts`)
@@ -111,7 +113,7 @@ The bot listens for message mentions, generates a reply via OpenRouter, stores b
    - Builds recent context (last 10 messages) plus optional RAG search results.
 2. **Agent orchestration** (`src/ai/agent/agent.ts`)
    - Calls `generateText` with the system prompt, recent context, and available tools.
-   - Uses OpenRouter’s Polaris Alpha model for reasoning and tool calls.
+   - Uses OpenRouter's models for reasoning and tool calls.
 3. **Embeddings** (`src/ai/embeddings/embeddings.ts`)
    - Requests embeddings from OpenRouter’s `/embeddings` endpoint.
    - Validates embedding length to protect against schema mismatches (see [Troubleshooting](#troubleshooting)).
@@ -137,8 +139,112 @@ src/
 │  ├─ Dockerfile
 │  └─ repositories/messageRepository.ts
 ├─ discord/bot.ts
+├─ services/
+│  └─ circuitBreaker/circuitBreaker.ts
 └─ types/BotConfig.ts
 ```
+
+---
+
+## Circuit Breaker Pattern
+
+The bot implements the **circuit breaker pattern** to protect against cascading failures when calling external APIs. This prevents the system from repeatedly attempting operations that are likely to fail, reducing unnecessary load and improving resilience.
+
+### How it works
+
+The circuit breaker has three states:
+
+1. **CLOSED** (normal operation)
+   - All requests pass through normally
+   - Failures are counted
+   - After reaching the failure threshold, transitions to OPEN
+
+2. **OPEN** (failure mode)
+   - Requests fail immediately without calling the external service
+   - Returns fallback responses to prevent cascading failures
+   - After the recovery timeout, transitions to HALF_OPEN
+
+3. **HALF_OPEN** (recovery mode)
+   - Allows a limited number of test requests through
+   - If successful, transitions back to CLOSED
+   - If failures continue, returns to OPEN
+
+### Example: Quote Tool
+
+The `quoteTool` (`src/ai/tools/quoteTool.ts`) demonstrates circuit breaker usage:
+
+```typescript
+import CircuitBreaker from "../../services/circuitBreaker/circuitBreaker";
+
+// Initialize circuit breaker
+// Parameters: failureThreshold, recoveryTimeout (ms), successThreshold
+const quoteApiCircuitBreaker = new CircuitBreaker(3, 30000, 2);
+
+export const quoteTool = tool({
+  description: "Get an inspirational quote from an external API",
+  inputSchema: z.object({
+    category: z.string().optional()
+  }),
+  execute: async ({ category }) => {
+    try {
+      // Wrap API call in circuit breaker
+      const result = await quoteApiCircuitBreaker.call(async () => {
+        const response = await fetch("https://api.quotable.io/random", {
+          signal: AbortSignal.timeout(5000),
+        });
+        
+        if (!response.ok) {
+          throw new Error(`API returned status ${response.status}`);
+        }
+        
+        const data = await response.json() as QuoteApiResponse;
+        return {
+          quote: data.content,
+          author: data.author,
+          category: category || "general",
+        };
+      });
+      
+      return result;
+    } catch (error) {
+      // Handle circuit open state
+      if (error instanceof Error && error.message === "Circuit is open") {
+        return {
+          error: "Quote service is temporarily unavailable.",
+          quote: "The circuit breaker is protecting the system.",
+          author: "Circuit Breaker Pattern",
+        };
+      }
+      
+      // Fallback for other errors
+      return {
+        error: "Failed to fetch quote from API",
+        quote: "In the face of adversity, resilience is our greatest strength.",
+        author: "Fallback Quote",
+      };
+    }
+  },
+});
+```
+
+### Configuration parameters
+
+- **failureThreshold** (3): Number of consecutive failures before opening the circuit
+- **recoveryTimeout** (30000ms): Wait time before attempting recovery in HALF_OPEN state
+- **successThreshold** (2): Number of successful calls required in HALF_OPEN to close the circuit
+
+### When to use circuit breakers
+
+Use circuit breakers for:
+- External API calls that may be unreliable
+- Services with rate limits or quotas
+- Operations that can have graceful fallbacks
+- Any I/O that could cause cascading failures
+
+Implement by:
+1. Creating a `CircuitBreaker` instance with appropriate thresholds
+2. Wrapping risky operations in `circuitBreaker.call()`
+3. Providing fallback behavior for when the circuit is open
 
 ---
 
@@ -221,4 +327,4 @@ Distributed under the MIT license. This project was bootstrapped with `bun init`
 
 ---
 
-> “I am Aigis. My mission is to protect you.” – now with vector search and Discord slash commands (coming soon).  
+> “I am Aigis. My mission is to protect you.”
