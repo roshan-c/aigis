@@ -19,6 +19,11 @@ console.log("Database config:", {
 
 export const pool = new Pool(dbConfig);
 
+pool.on("error", (err) => {
+  console.error("Unexpected database pool error:", err);
+  // Don't exit - let the application handle it gracefully
+});
+
 export async function initDatabase() {
   const client = await pool.connect();
   try {

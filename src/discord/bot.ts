@@ -28,7 +28,7 @@ client.once(Events.ClientReady, async (c) => {
 });
 
 function stripBotMention(content: string, botId: string): string {
-  return content.replaceAll(`<@${botId}>`, "").replaceAll(`<@!${botId}>`, "");
+  return content.replace(new RegExp(`<@!?${botId}>`, "g"), "");
 }
 
 async function buildContext(
@@ -41,32 +41,21 @@ async function buildContext(
     return "No recent conversation history.";
   }
 
-  const contextLines = recentMessages
-    .reverse()
-    .map(
-      (msg) =>
-        `[${msg.createdAt.toISOString()}] ${msg.authorName}: ${msg.content}`,
+  // Build context string directly without reversing array
+  const contextLines = [];
+  for (let i = recentMessages.length - 1; i >= 0; i--) {
+    const msg = recentMessages[i]!;
+    contextLines.push(
+      `[${msg.createdAt.toISOString()}] ${msg.authorName}: ${msg.content}`,
     );
+  }
 
   return `Recent conversation history:\n${contextLines.join("\n")}`;
 }
 
 client.on(Events.MessageCreate, async (message: Message) => {
   try {
-    if (message.author.bot && message.author.id !== client.user?.id) return;
-
-    if (message.author.id !== client.user?.id) {
-      await messageRepo.storeMessage(
-        message.id,
-        message.channelId,
-        message.guildId,
-        message.author.id,
-        message.author.username,
-        message.content,
-        message.author.bot,
-      );
-    }
-
+    // Early returns to avoid unnecessary processing
     if (message.author.bot) return;
     if (!client.user) return;
     if (!message.mentions.has(client.user)) return;
@@ -79,6 +68,17 @@ client.on(Events.MessageCreate, async (message: Message) => {
       });
       return;
     }
+
+    // Store user message only after confirming bot will respond
+    await messageRepo.storeMessage(
+      message.id,
+      message.channelId,
+      message.guildId,
+      message.author.id,
+      message.author.username,
+      message.content,
+      false,
+    );
 
     if (!message.channel.isTextBased()) return;
     await (message.channel as any).sendTyping();
