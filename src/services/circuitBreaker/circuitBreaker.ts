@@ -49,6 +49,9 @@ class CircuitBreaker {
         if (this.successes >= this.successThreshold) {
           this.moveToState("CLOSED");
         }
+      } else if (this.state === "CLOSED") {
+        // Reset failures on success in CLOSED state
+        this.failures = 0;
       }
       return result;
     } catch (error) {
