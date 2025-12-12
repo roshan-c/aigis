@@ -115,4 +115,72 @@ export class MessageRepository {
       similarity: row.similarity,
     }));
   }
+
+  async getMessagesBetweenUserMessages(
+    userId: string,
+    channelId: string,
+    currentMessageId: string,
+    limit: number = 200,
+  ): Promise<StoredMessage[]> {
+    try {
+      // First, get the timestamp of the current message
+      const currentMessageResult = await pool.query(
+        `SELECT created_at FROM messages WHERE message_id = $1`,
+        [currentMessageId],
+      );
+
+      if (currentMessageResult.rows.length === 0) {
+        return [];
+      }
+
+      const currentMessageTime = currentMessageResult.rows[0].created_at;
+
+      // Find the user's previous message in the same channel before the current message
+      const previousMessageResult = await pool.query(
+        `SELECT created_at FROM messages
+         WHERE author_id = $1
+         AND channel_id = $2
+         AND created_at < $3
+         ORDER BY created_at DESC
+         LIMIT 1`,
+        [userId, channelId, currentMessageTime],
+      );
+
+      // If no previous message found, return empty array
+      if (previousMessageResult.rows.length === 0) {
+        return [];
+      }
+
+      const previousMessageTime = previousMessageResult.rows[0].created_at;
+
+      // Get all messages between the two timestamps (excluding the boundary messages themselves)
+      // Limited to prevent performance issues with huge message ranges
+      const result = await pool.query(
+        `SELECT id, message_id, channel_id, guild_id, author_id,
+         author_name, content, created_at, is_bot
+         FROM messages
+         WHERE channel_id = $1
+         AND created_at > $2
+         AND created_at < $3
+         ORDER BY created_at ASC
+         LIMIT $4`,
+        [channelId, previousMessageTime, currentMessageTime, limit],
+      );
+
+      return result.rows.map((row) => ({
+        id: row.id,
+        messageId: row.message_id,
+        channelId: row.channel_id,
+        guildId: row.guild_id,
+        authorId: row.author_id,
+        authorName: row.author_name,
+        content: row.content,
+        createdAt: row.created_at,
+        isBot: row.is_bot,
+      }));
+    } catch (error) {
+      console.error("Error getting messages between user messages:", error);
+      throw error;
+    }
+  }
 }
