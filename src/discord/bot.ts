@@ -89,7 +89,14 @@ client.on(Events.MessageCreate, async (message: Message) => {
     await (message.channel as any).sendTyping();
 
     const context = await buildContext(message.channelId, 10);
-    const reply = await runAgent(prompt, context, message.channelId, config.aiModel);
+    const reply = await runAgent(
+      prompt,
+      context,
+      message.channelId,
+      message.author.id,
+      message.id,
+      config.aiModel,
+    );
 
     await messageRepo.storeMessage(
       `${message.id}-reply`,

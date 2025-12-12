@@ -7,11 +7,14 @@ import { weatherTool } from "../tools/weatherTool";
 import { convertFahrenheitToCelsiusTool } from "../tools/convertFahrenheitToCelsiusTool";
 import { createRagSearchTool } from "../tools/ragSearchTool";
 import { quoteTool } from "../tools/quoteTool";
+import { createMessageSummaryTool } from "../tools/messageSummaryTool";
 
 export async function runAgent(
   prompt: string,
   context: string,
   channelId: string,
+  userId: string,
+  currentMessageId: string,
   model: string,
 ) {
   const result = await generateText({
@@ -23,6 +26,7 @@ export async function runAgent(
       convertFahrenheitToCelsius: convertFahrenheitToCelsiusTool,
       ragSearch: createRagSearchTool(channelId),
       quote: quoteTool,
+      messageSummary: createMessageSummaryTool(userId, channelId, currentMessageId),
     },
     toolChoice: "auto",
     stopWhen: stepCountIs(10),
