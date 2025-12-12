@@ -120,6 +120,7 @@ export class MessageRepository {
     userId: string,
     channelId: string,
     currentMessageId: string,
+    limit: number = 200,
   ): Promise<StoredMessage[]> {
     try {
       // First, get the timestamp of the current message
@@ -153,6 +154,7 @@ export class MessageRepository {
       const previousMessageTime = previousMessageResult.rows[0].created_at;
 
       // Get all messages between the two timestamps (excluding the boundary messages themselves)
+      // Limited to prevent performance issues with huge message ranges
       const result = await pool.query(
         `SELECT id, message_id, channel_id, guild_id, author_id,
          author_name, content, created_at, is_bot
@@ -160,8 +162,9 @@ export class MessageRepository {
          WHERE channel_id = $1
          AND created_at > $2
          AND created_at < $3
-         ORDER BY created_at ASC`,
-        [channelId, previousMessageTime, currentMessageTime],
+         ORDER BY created_at ASC
+         LIMIT $4`,
+        [channelId, previousMessageTime, currentMessageTime, limit],
       );
 
       return result.rows.map((row) => ({

@@ -2,9 +2,12 @@ import { tool } from "ai";
 import { z } from "zod";
 import { MessageRepository } from "../../database/repositories/messageRepository";
 
-const messageRepo = new MessageRepository();
-
-export function createMessageSummaryTool(userId: string, channelId: string, currentMessageId: string) {
+export function createMessageSummaryTool(
+  userId: string,
+  channelId: string,
+  currentMessageId: string,
+  messageRepo: MessageRepository,
+) {
   return tool({
     description:
       "Get all messages that were sent in this channel between the user's current message and their previous message. Use this when the user asks what they missed, wants a summary of recent activity, or wants to catch up on the conversation while they were away.",
@@ -14,6 +17,7 @@ export function createMessageSummaryTool(userId: string, channelId: string, curr
         userId,
         channelId,
         currentMessageId,
+        200, // Limit to prevent fetching huge message ranges
       );
 
       if (messagesBetween.length === 0) {
