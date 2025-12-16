@@ -89,6 +89,10 @@ try
     // Register RAG plugin with the kernel (using IServiceProvider for scoped dependencies)
     kernel.Plugins.AddFromObject(new RagSearchPlugin(app.Services), "rag");
 
+    // Register Quote plugin with circuit breaker
+    var quoteLogger = app.Services.GetRequiredService<ILogger<QuotePlugin>>();
+    kernel.Plugins.AddFromObject(new QuotePlugin(quoteLogger), "quotes");
+
     // Configure middleware pipeline
     app.UseSerilogRequestLogging();
     app.UseApiKeyAuth();
