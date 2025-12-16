@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using Tartarus.Data;
@@ -11,9 +12,11 @@ using Tartarus.Data;
 namespace Tartarus.Migrations
 {
     [DbContext(typeof(TartarusDbContext))]
-    partial class TartarusDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251216105221_AddMessages")]
+    partial class AddMessages
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

@@ -68,6 +68,7 @@ try
 
     // Add services
     builder.Services.AddScoped<ChatService>();
+    builder.Services.AddScoped<MessageService>();
 
     // Add controllers
     builder.Services.AddControllers();

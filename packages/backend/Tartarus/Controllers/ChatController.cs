@@ -10,11 +10,16 @@ namespace Tartarus.Controllers;
 public class ChatController : ControllerBase
 {
     private readonly ChatService _chatService;
+    private readonly MessageService _messageService;
     private readonly ILogger<ChatController> _logger;
 
-    public ChatController(ChatService chatService, ILogger<ChatController> logger)
+    public ChatController(
+        ChatService chatService,
+        MessageService messageService,
+        ILogger<ChatController> logger)
     {
         _chatService = chatService;
+        _messageService = messageService;
         _logger = logger;
     }
 
@@ -33,8 +38,35 @@ public class ChatController : ControllerBase
 
         try
         {
-            // For Phase 1, we don't have context yet - will be added in Phase 2
-            var response = await _chatService.GenerateResponseAsync(request.Message);
+            // Save the user's message
+            await _messageService.SaveMessageAsync(
+                externalMessageId: request.MessageId,
+                channelId: request.ChannelId,
+                guildId: request.GuildId,
+                userId: request.UserId,
+                authorName: request.AuthorName,
+                content: request.Message,
+                role: "user");
+
+            // Get recent messages for context
+            var recentMessages = await _messageService.GetRecentMessagesAsync(
+                request.ChannelId,
+                request.ContextLimit);
+            var context = _messageService.BuildContextFromMessages(recentMessages);
+
+            // Generate AI response with context
+            var response = await _chatService.GenerateResponseAsync(request.Message, context);
+
+            // Save the bot's response (generate a unique ID for the response)
+            var responseMessageId = $"bot-{request.MessageId}";
+            await _messageService.SaveMessageAsync(
+                externalMessageId: responseMessageId,
+                channelId: request.ChannelId,
+                guildId: request.GuildId,
+                userId: "aigis-bot",
+                authorName: "Aigis",
+                content: response,
+                role: "assistant");
 
             stopwatch.Stop();
 
