@@ -1,3 +1,10 @@
 .env
 /.cursor
 /node_modules
+
+# Discord Bot
+/apps/discord-bot/dist
+
+# .NET
+bin/
+obj/
