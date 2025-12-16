@@ -5,7 +5,7 @@
  * In a real implementation, this would use discord.js and handle actual Discord events.
  */
 
-const BACKEND_URL = "http://localhost:5000";
+const BACKEND_URL = "http://localhost:7474";
 
 interface ChatRequest {
   Message: string;

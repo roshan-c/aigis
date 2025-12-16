@@ -43,8 +43,8 @@ app.MapPost("/chat", async (ChatRequest request, Kernel kernel) =>
 // Health check
 app.MapGet("/health", () => Results.Ok(new { status = "healthy" }));
 
-Console.WriteLine("Backend API running on http://localhost:5000");
-app.Run("http://localhost:5000");
+Console.WriteLine("Backend API running on http://localhost:7474");
+app.Run("http://localhost:7474");
 
 // Request/Response models
 record ChatRequest(string Message, string UserId, string ChannelId);
