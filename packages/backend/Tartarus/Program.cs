@@ -6,6 +6,7 @@ using Serilog.Events;
 using Serilog.Formatting.Compact;
 using Tartarus.Data;
 using Tartarus.Middleware;
+using Tartarus.Plugins;
 using Tartarus.Services;
 
 // Load .env file from project root (walks up to find it)
@@ -50,9 +51,9 @@ try
 
     var connectionString = $"Host={postgresHost};Port={postgresPort};Database={postgresDb};Username={postgresUser};Password={postgresPassword}";
 
-    // Add DbContext
+    // Add DbContext with pgvector support
     builder.Services.AddDbContext<TartarusDbContext>(options =>
-        options.UseNpgsql(connectionString));
+        options.UseNpgsql(connectionString, o => o.UseVector()));
 
     // Build the Semantic Kernel
     #pragma warning disable SKEXP0010
@@ -67,6 +68,7 @@ try
     builder.Services.AddSingleton(kernel);
 
     // Add services
+    builder.Services.AddSingleton<EmbeddingService>();
     builder.Services.AddScoped<ChatService>();
     builder.Services.AddScoped<MessageService>();
 
@@ -83,6 +85,9 @@ try
         dbContext.Database.Migrate();
         Log.Information("Database migrations applied successfully");
     }
+
+    // Register RAG plugin with the kernel (using IServiceProvider for scoped dependencies)
+    kernel.Plugins.AddFromObject(new RagSearchPlugin(app.Services), "rag");
 
     // Configure middleware pipeline
     app.UseSerilogRequestLogging();

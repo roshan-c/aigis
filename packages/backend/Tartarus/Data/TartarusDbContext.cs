@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Pgvector.EntityFrameworkCore;
 using Tartarus.Data.Entities;
 
 namespace Tartarus.Data;
@@ -15,6 +16,9 @@ public class TartarusDbContext : DbContext
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
+
+        // Enable pgvector extension
+        modelBuilder.HasPostgresExtension("vector");
 
         modelBuilder.Entity<ApiClient>(entity =>
         {
@@ -89,6 +93,10 @@ public class TartarusDbContext : DbContext
                 .HasMaxLength(20)
                 .IsRequired();
             
+            entity.Property(e => e.Embedding)
+                .HasColumnName("embedding")
+                .HasColumnType("vector(1536)");
+            
             entity.Property(e => e.CreatedAt)
                 .HasColumnName("created_at")
                 .HasDefaultValueSql("CURRENT_TIMESTAMP");
@@ -101,6 +109,12 @@ public class TartarusDbContext : DbContext
             entity.HasIndex(e => e.ExternalMessageId)
                 .IsUnique()
                 .HasDatabaseName("ix_messages_external_id");
+            
+            // HNSW index for fast vector similarity search
+            entity.HasIndex(e => e.Embedding)
+                .HasDatabaseName("ix_messages_embedding")
+                .HasMethod("hnsw")
+                .HasOperators("vector_cosine_ops");
         });
     }
 }
