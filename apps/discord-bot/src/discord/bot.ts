@@ -1,6 +1,6 @@
 import { Client, Events, GatewayIntentBits, Message } from "discord.js";
+import { TartarusClient } from "@aigis/tartarus-sdk";
 import { EmbedResponse } from "./embedBuilder/embedBuilder";
-import { TartarusClient } from "../services/tartarus/client";
 
 interface BotConfig {
   discordToken: string;
@@ -22,7 +22,10 @@ if (!config.tartarusApiKey) {
   throw new Error("TARTARUS_API_KEY environment variable is required");
 }
 
-const tartarus = new TartarusClient(config.tartarusUrl, config.tartarusApiKey);
+const tartarus = new TartarusClient({
+  baseUrl: config.tartarusUrl,
+  apiKey: config.tartarusApiKey,
+});
 
 const client = new Client({
   intents: [
@@ -34,9 +37,9 @@ const client = new Client({
 
 client.once(Events.ClientReady, async (c) => {
   console.log(`Ready! Logged in as ${c.user.tag}`);
-  
+
   // Check Tartarus connectivity
-  const healthy = await tartarus.healthCheck();
+  const healthy = await tartarus.isHealthy();
   if (healthy) {
     console.log(`Connected to Tartarus at ${config.tartarusUrl}`);
   } else {
