@@ -1,0 +1,7 @@
+namespace Tartarus.Models;
+
+public class ErrorResponse
+{
+    public required string Error { get; set; }
+    public required string Code { get; set; }
+}

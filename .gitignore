@@ -8,3 +8,4 @@
 # .NET
 bin/
 obj/
+logs/
