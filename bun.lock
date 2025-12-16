@@ -4,6 +4,16 @@
   "workspaces": {
     "": {
       "name": "aigis",
+      "devDependencies": {
+        "@types/bun": "latest",
+        "eslint": "^9.37.0",
+      },
+      "peerDependencies": {
+        "typescript": "^5",
+      },
+    },
+    "apps/aigis-bot": {
+      "name": "aigis-bot",
       "dependencies": {
         "@openrouter/ai-sdk-provider": "^1.2.0",
         "@types/pg": "^8.15.6",
@@ -12,13 +22,6 @@
         "dotenv": "^17.2.3",
         "pg": "^8.16.3",
         "zod": "^4.1.12",
-      },
-      "devDependencies": {
-        "@types/bun": "latest",
-        "eslint": "^9.37.0",
-      },
-      "peerDependencies": {
-        "typescript": "^5",
       },
     },
   },
@@ -104,6 +107,8 @@
     "acorn-jsx": ["acorn-jsx@5.3.2", "", { "peerDependencies": { "acorn": "^6.0.0 || ^7.0.0 || ^8.0.0" } }, "sha512-rq9s+JNhf0IChjtDXxllJ7g41oZk5SlXtp0LHwyA5cejwn7vKmKp4pPri6YEePv2PU65sAsegbXtIinmDFDXgQ=="],
 
     "ai": ["ai@5.0.60", "", { "dependencies": { "@ai-sdk/gateway": "1.0.33", "@ai-sdk/provider": "2.0.0", "@ai-sdk/provider-utils": "3.0.10", "@opentelemetry/api": "1.9.0" }, "peerDependencies": { "zod": "^3.25.76 || ^4.1.8" } }, "sha512-80U/3kmdBW6g+JkLXpz/P2EwkyEaWlPlYtuLUpx/JYK9F7WZh9NnkYoh1KvUi1Sbpo0NyurBTvX0a2AG9mmbDA=="],
+
+    "aigis-bot": ["aigis-bot@workspace:apps/aigis-bot"],
 
     "ajv": ["ajv@6.12.6", "", { "dependencies": { "fast-deep-equal": "^3.1.1", "fast-json-stable-stringify": "^2.0.0", "json-schema-traverse": "^0.4.1", "uri-js": "^4.2.2" } }, "sha512-j3fVLgvTo527anyYyJOGTYJbG+vnnQYvE0m5mmkc1TK+nxAppkCLMIL0aZ4dblVCNoGShhm+kzE4ZUykBoMg4g=="],
 
