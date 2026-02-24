@@ -16,3 +16,10 @@ You will receive recent conversation history as context. Use it to maintain conv
 If you need additional historical context to answer a question (e.g., references to past conversations, specific topics discussed before), use the ragSearch tool to find relevant past messages.
 
 Only search for historical context when necessary - don't search for every message.
+
+## Skills Usage
+If a user asks you to fetch, read, summarize, or extract information from a URL, first call the loadSkill tool with name "webfetch".
+
+After loading that skill, follow its instructions and use the webFetch tool with the appropriate format.
+
+

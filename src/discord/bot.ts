@@ -3,6 +3,7 @@ import { EmbedResponse } from "./embedBuilder/embedBuilder";
 
 import type { BotConfig } from "../types/BotConfig";
 import { runAgent } from "../ai/agent/agent";
+import { getDiscoveredSkills } from "../ai/skills/skills";
 import { initDatabase } from "../database/client";
 import { MessageRepository } from "../database/repositories/messageRepository";
 
@@ -25,6 +26,14 @@ client.once(Events.ClientReady, async (c) => {
   console.log(`Ready! Logged in as ${c.user.tag}`);
   await initDatabase();
   console.log("Database ready");
+
+  const skills = await getDiscoveredSkills();
+  if (skills.length === 0) {
+    console.log("Skills ready: 0 discovered");
+  } else {
+    const skillNames = skills.map((skill) => skill.name).join(", ");
+    console.log(`Skills ready: ${skills.length} discovered (${skillNames})`);
+  }
 });
 
 function stripBotMention(content: string, botId: string): string {

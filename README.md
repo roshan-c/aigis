@@ -8,7 +8,8 @@ An AI-powered Discord companion that role-plays as Aigis from *Persona 3*. The b
 
 - **Agentic Discord bot** &mdash; Powered by the [Vercel AI SDK](https://sdk.vercel.ai/) using models from OpenRouter.
 - **Retrieval-Augmented Generation** &mdash; Stores every message with a 1,536-dimensional vector and retrieves relevant history before answering.
-- **Tool calling** &mdash; Built-in tools for weather lookups (sample), Fahrenheit→Celsius conversion, quote fetching, and semantic memory search (`ragSearch`).
+- **Tool calling** &mdash; Built-in tools for weather lookups (sample), Fahrenheit→Celsius conversion, quote fetching, semantic memory search (`ragSearch`), and URL content fetching (`webFetch`).
+- **Agent Skills (`SKILL.md`)** &mdash; Discovers skill metadata at startup and loads full skill instructions on demand via a `loadSkill` tool.
 - **Circuit breaker pattern** &mdash; Protects external API calls from cascading failures with automatic recovery.
 - **Persona prompt** &mdash; The bot speaks in character using the prompt defined in `src/ai/system/SYSTEM.MD`.
 - **Embeddable responses** &mdash; Long replies are automatically split into Discord embeds with context sections.
@@ -70,6 +71,7 @@ Optional:
 | `OPENROUTER_API_BASE` | ❌ | `https://openrouter.ai/api/v1` | Override when routing through a proxy |
 | `OPENROUTER_EMBEDDING_MODEL` | ❌ | `openai/text-embedding-3-small` | Embedding model ID used for pgvector storage |
 | `EMBEDDING_VECTOR_DIMENSION` | ❌ | — | Expected embedding length; set if you change the table definition |
+| `SKILL_DIRECTORIES` | ❌ | `./.agents/skills,~/.agents/skills,~/.config/agent/skills` | Comma-separated directories used to discover `SKILL.md` skills |
 
 > **Note:** Database connection details currently default to `localhost:5432`, `postgres/postgres`, and database name `aigis`. Update `src/database/client.ts` if you need different credentials.
 
@@ -132,6 +134,7 @@ src/
 │  ├─ agent/agent.ts
 │  ├─ embeddings/embeddings.ts
 │  ├─ providers/openrouter.ts
+│  ├─ skills/skills.ts
 │  ├─ system/SYSTEM.MD
 │  └─ tools/...
 ├─ database/
@@ -273,7 +276,36 @@ The bot:
 
 - Loads the last 10 messages for local context.
 - Optionally calls `ragSearch` if the base context is insufficient.
+- Optionally calls `loadSkill` when a request matches an available skill's description.
 - Replies in-character with a formatted embed.
+
+## Agent Skills (`SKILL.md`)
+
+The bot supports the [Agent Skills](https://agentskills.io) format with progressive disclosure:
+
+- At startup, it discovers skills and loads only each skill's `name` + `description` from `SKILL.md` frontmatter.
+- During generation, it can call `loadSkill` to load the full `SKILL.md` body for a matching skill.
+- Loaded skill responses include the skill directory path so the model can reference bundled scripts/resources.
+
+Default skill discovery directories:
+
+- `./.agents/skills`
+- `~/.agents/skills`
+- `~/.config/agent/skills`
+
+You can override directories via `SKILL_DIRECTORIES` in `.env` using a comma-separated list.
+
+This repository includes an example skill at `.agents/skills/webfetch/SKILL.md`.
+
+Expected skill layout:
+
+```text
+my-skill/
+├─ SKILL.md
+├─ scripts/
+├─ references/
+└─ assets/
+```
 
 ---
 
