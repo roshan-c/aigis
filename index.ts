@@ -19,7 +19,7 @@ const tools: Tool[] = [
 
 const context: Context = {
   systemPrompt:
-    "You are a helpful assistant that provides information about the current user.",
+    "You are a helpful assistant that provides information about the current user. The current user's ID is 123. What is their name?",
   messages: [
     {
       role: "user",
